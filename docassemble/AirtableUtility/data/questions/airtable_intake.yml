@@ -1,0 +1,79 @@
+---
+modules:
+  - .airtable_intake
+---
+objects:
+  - answer_dict: DADict.using(auto_gather=False)
+---
+code: |
+
+  intake_stuff = get_fields_from_intake('test')
+---
+if: |
+  intake_stuff[i]['dt'] == 'file'
+question: File! ${ intake_stuff[i]['question'] }
+fields:
+  - label: ${ intake_stuff[i]['label'] }
+    field: answer_dict[i]
+    datatype: file
+---
+if: |
+  intake_stuff[i]['dt'] == 'date'
+question: ${ intake_stuff[i]['question'] }
+fields:
+  - label: ${ intake_stuff[i]['label'] }
+    field: answer_dict[i]
+    datatype: date
+---
+if: |
+  intake_stuff[i]['dt'] == 'email'
+question: ${ intake_stuff[i]['question'] }
+fields:
+  - label: ${ intake_stuff[i]['label'] }
+    field: answer_dict[i]
+    datatype: email
+---
+if: |
+  intake_stuff[i]['dt'] == ''
+question: ${ intake_stuff[i]['question'] }
+fields:
+  - label: ${ intake_stuff[i]['label'] }
+    field: answer_dict[i]
+    datatype: ${ intake_stuff[i]['dt'] }
+---
+---
+
+mandatory: True
+code: |
+  for key in intake_stuff.keys():
+    answer_dict[key]
+  answer_dict.gathered = True
+
+---
+mandatory: True
+question: |
+  Here are your submissions:
+subquestion: |
+  % for key, value in answer_dict.iteritems():
+  ${key} : ${ value }
+
+  % endfor
+  
+  Are you ready to submit?
+yesno: submit_please
+---
+code: |
+  if submit_please == True:
+
+    send_to_table(answer_dict, 'test')
+    end_screen = True
+mandatory: true
+---
+if: |
+  end_screen == True
+question: |
+  Submitted!
+buttons:
+  - Exit: exit
+  - Restart: restart  
+mandatory: True
